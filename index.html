@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <script src="/names.js"></script>
+
+    <style>
+        #img {
+            margin: 0 auto;
+            text-align: center;
+            overflow: hidden;
+            width: 100%;
+            max-width: 500px;
+            height: 500px;
+        }
+        
+        .answer {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .anwerList {
+            width: 100px;
+            height: 40px;
+            line-height: 40px;
+            display: inline-block;
+            background: #eee;
+            border-radius: 10px;
+            margin: 0 5px;
+            cursor: pointer
+        }
+        
+        .dim {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            top: 0;
+            left: 0;
+            display: none;
+        }
+        
+        .dim img {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+
+
+<body>
+    <div class="dim">
+        <img>
+    </div>
+    <div id="img" style="">
+        <img width="100%" style="display:none;">
+    </div>
+    <div class="answer"></div>
+    <script>
+        gameStart();
+
+        function gameStart() {
+            shuffle(names);
+            console.log(names[0]);
+            var answerName = names[0];
+            var answerNames = '"' + names[0] + '"';
+
+            var wrongNameRand = Math.random();
+            console.log(Math.floor(wrongNameRand * names.length + 1))
+
+            var spanList = lottoNum(answerName);
+            shuffle(spanList);
+            var rands = Math.floor(Math.random() * 10);
+            console.log('rands', rands)
+
+
+
+            var params = {
+                query: answerName,
+                page: 1,
+                size: 10
+            }
+
+            // ajax 통신
+            $.ajax({
+                type: "GET", // HTTP method type(GET, POST) 형식이다.
+                url: "https://dapi.kakao.com/v2/search/image", // 컨트롤러에서 대기중인 URL 주소이다.
+                data: params, // Json 형식의 데이터이다.
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader("Content-type", "application/json");
+                    xhr.setRequestHeader("Authorization", "KakaoAK 1f64fd2b5f780ced81e4e045f034fe9c");
+                },
+                success: function(res) { // 비동기통신의 성공일경우 success콜백으로 들어옵니다. 'res'는 응답받은 데이터이다.
+                    // 응답코드 > 0000
+                    console.log(res.documents[rands].image_url);
+                    res.documents[0].image_url.onerror = function() {
+                        console.log('asd')
+                    }
+                    $('#img img').attr('src', res.documents[rands].image_url)
+                    $('#img img').attr('onerror', 'javascript:location.reload();')
+                        // $("#img").css({
+                        //     'background-image': 'url(' + res.documents[0].image_url + ')'
+                        // })
+                    spanList.forEach(function(item) {
+                        console.log(item);
+                        $('.answer').append('<span class="anwerList" onclick="answer(this)" data-tag="' + answerName + '">' + item + '</span>')
+                    });
+
+                    $('#img img').show()
+
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) { // 비동기 통신이 실패할경우 error 콜백으로 들어옵니다.
+                    console.log(XMLHttpRequest, textStatus, errorThrown, 'error')
+                    location.reload();
+                }
+            });
+        }
+
+
+
+        function answer(el) {
+            var txt = $(el).text();
+            var an = $(el).data('tag');
+            console.log(an)
+
+            if (an == txt) {
+                console.log('정답')
+                $('.anwerList').remove();
+                $('#img img').attr('src', '')
+                    // location.reload();
+                gameStart();
+            } else {
+                console.log('오답')
+                var rands = Math.floor(Math.random() * 8) + 1;
+                console.log(rands)
+                    // ajax 통신
+                $('.dim img').attr('src', errorImg[rands]);
+                $('#img img').attr('onerror', 'this.src=""')
+                $('.dim').show();
+                setTimeout(function() {
+                    $('.dim').hide();
+                }, 2000);
+
+            }
+        }
+
+        function shuffle(array) {
+            array.sort(() => Math.random() - 0.5);
+        }
+
+        function lottoNum(t) {
+            const lotto = [];
+
+            function makeNum() {
+                if (lotto.length < 3) {
+                    let n = Math.floor(Math.random() * names.length) + 1;
+                    if (notSame(n)) {
+                        console.log(n)
+                        lotto.push(names[n]);
+                    }
+                    makeNum();
+                }
+
+                function notSame(n) {
+                    return lotto.every((e) => n !== e);
+                }
+            }
+            makeNum();
+            lotto.push(t)
+            return lotto;
+        }
+    </script>
+</body>
+
+
+</html>
