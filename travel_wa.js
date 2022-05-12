@@ -1,7 +1,3 @@
-document.write(
-  '<link rel="stylesheet" type="text/css" href="https://www.hanacard.co.kr/css/headGnb_travel.css" />'
-);
-
 document.write('<div class="header_wrap">');
 document.write('<div class="header_cont">');
 document.write(
